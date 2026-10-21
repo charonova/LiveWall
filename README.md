@@ -62,7 +62,7 @@
 ### Build from source
 
 ```bash
-git clone https://github.com/<your-username>/LiveWall.git
+git clone https://github.com/charonova/LiveWall.git
 cd LiveWall
 ./scripts/install.sh   # builds, copies to ~/Applications and launches
 ```

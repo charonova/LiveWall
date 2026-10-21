@@ -5,7 +5,7 @@ Thanks for helping! Bug reports, ideas and pull requests are all welcome.
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-username>/LiveWall.git
+git clone https://github.com/charonova/LiveWall.git
 cd LiveWall
 swift build          # debug build
 ./scripts/build.sh   # release build → build/LiveWall.app
