@@ -11,9 +11,35 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue)
 ![No dependencies](https://img.shields.io/badge/dependencies-none-success)
 
+<br>
+
+<a href="demo/demo.mp4"><img src="demo/demo.gif" width="800" alt="Switching live wallpapers from the LiveWall menu bar panel"></a>
+
+<sub>Switching wallpapers from the menu bar. <a href="demo/demo.mp4">Watch the full-quality video</a>.</sub>
+
 </div>
 
 ---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="demo/panel-library.jpg" alt="Library page: live preview, library grid and lock screen switch"><br>
+      <sub><b>Library</b> — live preview, one click to switch, lock screen in sync</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="demo/panel-settings.jpg" alt="Settings page: playback, lock screen and general options"><br>
+      <sub><b>Settings</b> — pause rules, lock screen options, Open at Login</sub>
+    </td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="demo/screenshot.jpg" alt="A live wallpaper playing behind desktop widgets and icons">
+  <br><sub>A live wallpaper behind desktop widgets and icons, which stay fully usable.</sub>
+</p>
 
 ## Features
 
