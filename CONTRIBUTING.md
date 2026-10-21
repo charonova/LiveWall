@@ -53,6 +53,23 @@ Logs: `/usr/bin/log stream --predicate 'subsystem == "com.aissam.livewall"'`
 
 The icon is drawn in code. Edit `scripts/make-icon.swift`, then run `./scripts/make-icon.sh`.
 
+## Updating the demo media
+
+The README uses the files in `demo/`. From a new screen recording (`recording.mov`):
+
+```bash
+# Full-quality video: 1080p, 30 fps, no audio
+ffmpeg -i recording.mov -an -vf "fps=30,scale=1920:-2:flags=lanczos" \
+  -c:v libx264 -preset slow -crf 23 -pix_fmt yuv420p -movflags +faststart demo/demo.mp4
+
+# README GIF: a short highlight, kept under ~10 MB
+ffmpeg -ss 1.5 -t 11.5 -i demo/demo.mp4 -vf "fps=12,scale=800:-1:flags=lanczos,split[a][b];\
+[a]palettegen=max_colors=192:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
+  -loop 0 demo/demo.gif
+```
+
+Panel close-ups (`panel-*.jpg`) are crops of single frames from the recording.
+
 ## Releases
 
 1. Update `CHANGELOG.md` and the version in `Resources/Info.plist`.

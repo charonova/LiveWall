@@ -86,6 +86,7 @@ To test, compare `AllSpacesAndDisplays` and the LiveWall entries before and afte
 | `LockScreen/` | Aerials catalog, wallpaper store, install/restore/repair |
 | `UI/` | Panel views, glass helpers, shared components, live preview |
 | `Support/` | Paths, `ProcessRunner`, login item |
+| `demo/` (repo root) | README media; see "Updating the demo media" in CONTRIBUTING.md |
 
 ## Style
 
