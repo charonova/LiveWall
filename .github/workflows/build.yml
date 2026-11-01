@@ -1,4 +1,4 @@
-name: Build
+name: Build and test
 
 on:
   push:
@@ -16,13 +16,16 @@ jobs:
       - name: Show toolchain
         run: swift --version
 
-      - name: Build app
-        run: ./scripts/build.sh
+      - name: Test
+        run: ./scripts/test.sh
 
-      - name: Package
-        run: ditto -c -k --keepParent build/LiveWall.app LiveWall.zip
+      # The same zip a release attaches: universal, named LiveWall.zip, with its SHA-256.
+      - name: Build release zip
+        run: ./scripts/release.sh
 
       - uses: actions/upload-artifact@v4
         with:
           name: LiveWall
-          path: LiveWall.zip
+          path: |
+            dist/LiveWall.zip
+            dist/LiveWall.zip.sha256

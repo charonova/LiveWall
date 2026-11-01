@@ -3,8 +3,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-swift build -c release
-BIN="$(swift build -c release --show-bin-path)/LiveWall"
+# UNIVERSAL=1 builds for Intel Macs too (releases do).
+ARCHS=()
+[ "${UNIVERSAL:-0}" = 1 ] && ARCHS=(--arch arm64 --arch x86_64)
+# ${ARCHS[@]+…}: macOS's bash 3.2 calls an empty array unbound under `set -u`.
+swift build -c release ${ARCHS[@]+"${ARCHS[@]}"}
+BIN="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)/LiveWall"
 
 APP="build/LiveWall.app"
 rm -rf "$APP"
