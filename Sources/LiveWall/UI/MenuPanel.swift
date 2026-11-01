@@ -1,4 +1,5 @@
 import AVFoundation
+import LiveWallCore
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -161,6 +162,9 @@ private struct SettingsPage: View {
                         }
                     }
 
+                    SectionLabel("Software Update")
+                    SoftwareUpdateCard()
+
                     if let error = app.lastError {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
@@ -171,6 +175,112 @@ private struct SettingsPage: View {
             }
             .scrollIndicators(.never)
         }
+    }
+}
+
+/// Software Update, like the one in System Settings: the version running, whether a newer one
+/// is out and what's in it, and the button that installs it.
+private struct SoftwareUpdateCard: View {
+    @EnvironmentObject private var settings: AppSettings
+    @EnvironmentObject private var updater: Updater
+
+    var body: some View {
+        Card {
+            SettingRow(symbol: symbol, color: color, title: title, subtitle: subtitle,
+                       subtitleColor: isFailed ? .red : .secondary) { accessory }
+            if let release = updater.availableRelease {
+                VStack(alignment: .leading, spacing: 6) {
+                    if !release.notes.isEmpty {
+                        Text(notes(release.notes))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Link("Release Notes", destination: release.page).font(.caption)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 48)
+                .padding(.trailing, 12)
+                .padding(.bottom, 10)
+            }
+            CardDivider()
+            SettingRow(
+                symbol: "clock.arrow.circlepath", color: .gray,
+                title: "Check Automatically",
+                subtitle: "Once a day, from GitHub. Never installs without you"
+            ) { RowSwitch(isOn: $settings.checkForUpdates) }
+        }
+        .animation(.smooth, value: updater.state)
+    }
+
+    @ViewBuilder private var accessory: some View {
+        if updater.isBusy {
+            ProgressView().controlSize(.small)
+        } else if updater.availableRelease != nil {
+            Button("Update Now") { Task { await updater.install() } }
+                .glassButton(prominent: true)
+                .controlSize(.small)
+        } else {
+            Button("Check Now") { Task { await updater.check() } }
+                .glassButton()
+                .controlSize(.small)
+        }
+    }
+
+    private var isFailed: Bool {
+        if case .failed = updater.state { return true }
+        return false
+    }
+
+    private var symbol: String {
+        switch updater.state {
+        case .available: return "arrow.down.circle.fill"
+        case .failed: return "exclamationmark.triangle.fill"
+        case .upToDate: return "checkmark.seal.fill"
+        default: return "arrow.triangle.2.circlepath"
+        }
+    }
+
+    private var color: Color {
+        switch updater.state {
+        case .failed: return .orange
+        case .upToDate: return .green
+        default: return .teal
+        }
+    }
+
+    private var title: String {
+        switch updater.state {
+        case .available(let release): return "LiveWall \(release.version.description) is available"
+        case .upToDate: return "LiveWall is up to date"
+        default: return "LiveWall \(updater.currentVersion)"
+        }
+    }
+
+    private var subtitle: String {
+        switch updater.state {
+        case .checking: return "Checking for updates…"
+        case .downloading(let release): return "Downloading LiveWall \(release.version.description)…"
+        case .installing(let release): return "Installing LiveWall \(release.version.description). It reopens in a moment."
+        case .available(let release):
+            let size = release.size > 0 ? " · " + ByteCountFormatter.string(fromByteCount: Int64(release.size), countStyle: .file) : ""
+            return "You have version \(updater.currentVersion)\(size)"
+        case .failed(let message): return message
+        case .upToDate, .idle: return checkedLine
+        }
+    }
+
+    private var checkedLine: String {
+        guard let checked = updater.lastChecked else { return "Version \(updater.currentVersion)" }
+        let ago = Date().timeIntervalSince(checked) < 60
+            ? "just now" : RelativeDateTimeFormatter().localizedString(for: checked, relativeTo: Date())
+        return "Version \(updater.currentVersion) · checked \(ago)"
+    }
+
+    /// The release notes' Markdown, shown with its bold and code; lines stay lines.
+    private func notes(_ markdown: String) -> AttributedString {
+        (try? AttributedString(markdown: markdown, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(markdown)
     }
 }
 
@@ -610,6 +720,7 @@ private struct LockScreenRow: View {
 
 private struct Footer: View {
     @EnvironmentObject private var app: AppController
+    @EnvironmentObject private var updater: Updater
 
     var body: some View {
         HStack(spacing: 8) {
@@ -622,6 +733,13 @@ private struct Footer: View {
                 Label("Settings", systemImage: "gearshape")
             }
             .glassButton(prominent: app.page == .settings)
+            // A dot, like System Settings' badge, when a new version is out.
+            .overlay(alignment: .topTrailing) {
+                if updater.availableRelease != nil {
+                    Circle().fill(.red).frame(width: 8, height: 8).offset(x: 2, y: -2)
+                }
+            }
+            .help(updater.availableRelease.map { "LiveWall \($0.version.description) is available" } ?? "Settings")
             Spacer()
             Button { NSApp.terminate(nil) } label: {
                 Label("Quit", systemImage: "power")

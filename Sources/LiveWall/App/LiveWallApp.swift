@@ -12,6 +12,7 @@ struct LiveWallApp: App {
                 .environmentObject(appDelegate.controller.settings)
                 .environmentObject(appDelegate.controller.library)
                 .environmentObject(appDelegate.controller.lockScreen)
+                .environmentObject(appDelegate.controller.updater)
         } label: {
             Image(systemName: "play.rectangle.on.rectangle.fill")
         }
@@ -32,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Videos opened with LiveWall (Finder › Open With) are added to the library;
-    /// livewall:// links control playback, e.g. from Shortcuts.
+    /// livewall:// links control playback and updates, e.g. from Shortcuts.
     func application(_ application: NSApplication, open urls: [URL]) {
         let files = urls.filter(\.isFileURL)
         if !files.isEmpty { controller.library.importVideos(files) }
@@ -54,6 +55,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else if let id = parts.dropFirst().first.flatMap(UUID.init(uuidString:)),
                       let video = controller.library.item(id) {
                 controller.useOnLockScreen(video)
+            }
+        case "update":
+            // update: check now; update/install also installs what it finds.
+            let install = parts.dropFirst().first == "install"
+            Task {
+                await controller.updater.check()
+                if install { await controller.updater.install() }
             }
         default:
             break

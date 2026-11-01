@@ -18,6 +18,7 @@ final class AppController: ObservableObject {
     let settings = AppSettings()
     let library = LibraryStore()
     let lockScreen = LockScreenManager()
+    let updater = Updater()
 
     @Published private(set) var displays: [DisplayInfo] = []
     @Published private(set) var status = PlaybackStatus(text: "Starting…", isPlaying: false) {
@@ -71,6 +72,11 @@ final class AppController: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reinstallLockScreen() }
             .store(in: &cancellables)
+        // Starts the daily update check, now and whenever the setting is turned on.
+        updater.start()
+        settings.$checkForUpdates
+            .sink { [weak self] in self?.updater.checksAutomatically = $0 }
+            .store(in: &cancellables)
 
         layoutWallpapers()
         lockScreen.refresh(library: library)
@@ -85,6 +91,7 @@ final class AppController: ObservableObject {
 
     func stop() {
         repairTimer?.invalidate()
+        updater.stop()
         conditions.stop()
         engine.tearDown()
     }

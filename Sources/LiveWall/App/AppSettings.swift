@@ -20,6 +20,8 @@ final class AppSettings: ObservableObject {
     }
     /// Also puts the video in the macOS desktop slot, which is what animates on the lock screen.
     @Published var lockScreenAnimates: Bool { didSet { defaults.set(lockScreenAnimates, forKey: Key.lockScreenAnimates) } }
+    /// Whether LiveWall asks GitHub once a day for a newer version (it never installs on its own).
+    @Published var checkForUpdates: Bool { didSet { defaults.set(checkForUpdates, forKey: Key.checkForUpdates) } }
 
     init() {
         defaults.register(defaults: [
@@ -28,6 +30,7 @@ final class AppSettings: ObservableObject {
             Key.pauseInLowPower: true,
             Key.lockScreenAnimates: true,
             Key.lockScreenFollows: true,
+            Key.checkForUpdates: true,
         ])
         wallpaperID = defaults.string(forKey: Key.wallpaper).flatMap(UUID.init)
         displayOverrides = (defaults.dictionary(forKey: Key.overrides) as? [String: String] ?? [:])
@@ -38,6 +41,7 @@ final class AppSettings: ObservableObject {
         lockScreenVideoID = defaults.string(forKey: Key.lockScreenVideo).flatMap(UUID.init)
         lockScreenAnimates = defaults.bool(forKey: Key.lockScreenAnimates)
         lockScreenFollowsWallpaper = defaults.bool(forKey: Key.lockScreenFollows)
+        checkForUpdates = defaults.bool(forKey: Key.checkForUpdates)
     }
 
     private enum Key {
@@ -49,5 +53,6 @@ final class AppSettings: ObservableObject {
         static let lockScreenVideo = "lockScreenVideoID"
         static let lockScreenAnimates = "lockScreenAnimates"
         static let lockScreenFollows = "lockScreenFollowsWallpaper"
+        static let checkForUpdates = "checkForUpdates"
     }
 }
