@@ -49,7 +49,7 @@
 - **Every display & Space** — pick one video for all displays or a different one per display; works with Mission Control, Stage Manager and full-screen apps, and desktop icons stay clickable.
 - **Lock screen & screen saver** — your video plays when you lock your Mac, and can follow your desktop wallpaper automatically. One switch to turn it off and put your old lock screen back.
 - **Liquid Glass panel** — a menu bar panel with a live preview of your wallpaper, built with macOS 26's glass design (with a material fallback on macOS 14–15).
-- **Private** — no accounts, no analytics, no network access. Everything stays on your Mac.
+- **Private** — no accounts, no analytics. The only network request is a once-a-day check for a new version on GitHub, which you can turn off. Everything else stays on your Mac.
 
 ## Requirements
 
@@ -59,6 +59,21 @@
 
 ## Install
 
+macOS 14 or later, Apple silicon and Intel. One command downloads and opens it:
+
+```bash
+curl -fL https://github.com/charonova/LiveWall/releases/latest/download/LiveWall.zip -o /tmp/LiveWall.zip \
+  && mkdir -p ~/Applications && ditto -xk /tmp/LiveWall.zip ~/Applications && open ~/Applications/LiveWall.app
+```
+
+LiveWall isn't notarized by Apple yet (that needs a paid developer account). Installed with the command above, it opens right away. From a browser download ([`LiveWall.zip` on the Releases page](https://github.com/charonova/LiveWall/releases/latest)), unzip it, move it to Applications, open it once, then click **Open Anyway** in **System Settings › Privacy & Security**. Or clear the download flag yourself:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/LiveWall.app
+```
+
+After that, new versions install from **Settings › Software Update** in the LiveWall panel. Coming from 1.0.0, which can't update itself, run the command above once.
+
 ### Build from source
 
 ```bash
@@ -67,15 +82,7 @@ cd LiveWall
 ./scripts/install.sh   # builds, copies to ~/Applications and launches
 ```
 
-`./scripts/build.sh` alone builds `build/LiveWall.app` without installing it.
-
-### Downloaded builds
-
-Release builds are ad-hoc signed, not notarized. The first time, right-click LiveWall in Finder and choose **Open**, or run:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/LiveWall.app
-```
+`./scripts/build.sh` alone builds `build/LiveWall.app` without installing it, `./scripts/test.sh` runs the tests, and `./scripts/release.sh` builds the release zip (`dist/LiveWall.zip`, universal) and its SHA-256.
 
 ## Usage
 
@@ -84,7 +91,7 @@ xattr -dr com.apple.quarantine /Applications/LiveWall.app
 3. Click a video to make it your wallpaper. With several displays, choose a display first.
 4. Turn on **Lock Screen** to see it when your Mac is locked. Press <kbd>⌃</kbd><kbd>⌘</kbd><kbd>Q</kbd> to try it.
 
-Right-click a video to rename it, put it on the lock screen, show it in Finder or remove it. The **Settings** page has the pause rules, lock screen options and Open at Login.
+Right-click a video to rename it, put it on the lock screen, show it in Finder or remove it. The **Settings** page has the pause rules, lock screen options, Open at Login and Software Update.
 
 ### Automation
 
@@ -95,6 +102,7 @@ Right-click a video to rename it, put it on the lock screen, show it in Finder o
 | `livewall://pause` · `play` · `toggle` | Control playback |
 | `livewall://lockscreen/<video-id>` | Put a library video on the lock screen |
 | `livewall://lockscreen/off` | Restore the previous lock screen |
+| `livewall://update` · `update/install` | Check for a new version now; `install` also installs it |
 
 Video IDs are listed in `~/Library/Application Support/LiveWall/library.json`.
 
@@ -118,6 +126,10 @@ macOS draws the lock screen from its Aerials system. LiveWall adds the video as 
 - It saves the choice it replaces; turning the switch off puts it back.
 - It keeps copies of both macOS files it edits in `~/Library/Application Support/LiveWall/Backups`.
 - If macOS refreshes its Aerials list and drops the entry, LiveWall restores it on launch, on wake and every 15 minutes.
+
+### Software update
+
+Once a day (unless you turn it off), LiveWall asks GitHub for its latest release and says in Settings when a newer one is out. It installs only when you click **Update Now**: the download must match the release's SHA-256, be LiveWall at the promised version and pass `codesign --verify`. Then LiveWall quits, the new version takes the old one's place (the old one stays until the new one is in) and opens. Your library and settings are untouched.
 
 ## Performance
 

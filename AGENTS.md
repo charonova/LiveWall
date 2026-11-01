@@ -13,12 +13,16 @@ swift build -c release            # compile
 ./scripts/build.sh                # → build/LiveWall.app (ad-hoc signed)
 open build/LiveWall.app           # run
 ./scripts/install.sh              # build + install to ~/Applications + launch
+./scripts/test.sh                 # tests (adds the Testing plugin path on Command Line Tools)
+./scripts/release.sh              # → dist/LiveWall.zip (Apple silicon + Intel, macOS 14+) and its SHA-256
 ./scripts/make-icon.sh            # regenerate Resources/AppIcon.icns and docs/icon.png
 ```
 
+Releases: bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist`, add the version to `CHANGELOG.md` and its notes to `docs/release-notes/`, run `./scripts/release.sh`, and attach `dist/LiveWall.zip` and `dist/LiveWall.zip.sha256` to a GitHub release under exactly those names. The README's install command downloads `releases/latest/download/LiveWall.zip`, and the in-app updater accepts only a release with `LiveWall.zip` (and checks it against `LiveWall.zip.sha256`). Release notes put what's new first and the install instructions under a line starting with `**Install**`: Settings shows everything above it. With `LIVEWALL_IDENTITY` (a Developer ID) and `LIVEWALL_NOTARY_PROFILE` set, the script also signs for distribution and notarizes.
+
 To restart a running copy: `osascript -e 'tell application id "com.aissam.livewall" to quit'; open build/LiveWall.app`.
 
-There are no automated tests. Verify behavior with:
+`Tests/LiveWallCoreTests` covers `LiveWallCore` (version comparison, GitHub's release answer); every change there needs tests. The app itself has no automated tests. Verify behavior with:
 
 - **Logs** (the app logs status and lock screen state changes):
   `/usr/bin/log show --last 5m --predicate 'subsystem == "com.aissam.livewall"'`
@@ -33,6 +37,7 @@ There are no automated tests. Verify behavior with:
 - **Never use SwiftUI `@State` or `@Entry`.** In current SDKs they're macros whose plugin ships only with Xcode, so they break the Command Line Tools build. Put view state in `AppController` (`@Published`) and read it through `@EnvironmentObject`. `@Namespace`, `@Published`, `@EnvironmentObject` and `@Observable` are fine.
 - **macOS 14 deployment target.** Guard newer APIs with `#available(macOS 26, *)`; `UI/Glass.swift` has the Liquid Glass wrappers with material fallbacks.
 - **No third-party dependencies.**
+- **Updates install only on the person's click.** `Updater` checks GitHub at most once a day, and only while Settings › Check Automatically is on; it installs only from Update Now or `livewall://update/install`. A download must match its `.sha256`, be `com.aissam.livewall` at the promised version and pass `codesign --verify` before it replaces the app, and the old app stays until the new one is in place. This is LiveWall's only network access.
 - Swift 5 language mode (`swift-tools-version:5.10`). UI-facing classes are `@MainActor`; file and conversion work runs off the main actor.
 
 ## Performance rules
@@ -77,6 +82,7 @@ To test, compare `AllSpacesAndDisplays` and the LiveWall entries before and afte
 | `App/LiveWallApp.swift` | `@main`, `MenuBarExtra`, `AppDelegate` (file opening, `livewall://` links) |
 | `App/AppController.swift` | Central state: wallpaper choice, playback status, panel state, lock screen actions |
 | `App/AppSettings.swift` | `UserDefaults`-backed preferences |
+| `Sources/LiveWallCore/Updates.swift` | Testable update logic: `AppVersion`, `ReleaseFeed` (GitHub's `releases/latest` answer, checksum files) |
 | `Playback/WallpaperWindow.swift` | Desktop-level window per display, cross-fading `AVPlayerLayer` |
 | `Playback/WallpaperEngine.swift` | Windows ↔ shared players, play/pause decisions |
 | `Playback/LoopingPlayer.swift` | `AVQueuePlayer` + `AVPlayerLooper` |
@@ -85,7 +91,7 @@ To test, compare `AllSpacesAndDisplays` and the LiveWall entries before and afte
 | `Library/` | Library persistence, import queue, conversion |
 | `LockScreen/` | Aerials catalog, wallpaper store, install/restore/repair |
 | `UI/` | Panel views, glass helpers, shared components, live preview |
-| `Support/` | Paths, `ProcessRunner`, login item |
+| `Support/` | Paths, `ProcessRunner`, login item, `Updater` (Software Update: check, download, verify, replace and relaunch) |
 | `demo/` (repo root) | README media; see "Updating the demo media" in CONTRIBUTING.md |
 
 ## Style

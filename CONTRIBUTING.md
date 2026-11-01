@@ -25,8 +25,9 @@ Only the Xcode Command Line Tools are required. Xcode works too: `open Package.s
 | `Sources/LiveWall/Library` | Video library and the import/conversion pipeline |
 | `Sources/LiveWall/LockScreen` | Aerials catalog and wallpaper store editing |
 | `Sources/LiveWall/UI` | The menu bar panel (SwiftUI) |
-| `Sources/LiveWall/Support` | Paths, process runner, login item |
-| `scripts/` | Build, install and icon generation |
+| `Sources/LiveWall/Support` | Paths, process runner, login item, software update |
+| `Sources/LiveWallCore` | Logic with no UI, covered by tests (`Tests/LiveWallCoreTests`) |
+| `scripts/` | Build, install, test, release and icon generation |
 
 ## Guidelines
 
@@ -38,9 +39,10 @@ Only the Xcode Command Line Tools are required. Xcode works too: `open Package.s
 
 ## Testing your change
 
-There's no automated UI test suite yet, so please check by hand:
+`./scripts/test.sh` runs the tests for `LiveWallCore`. There's no automated UI test suite yet, so please also check by hand:
 
 - [ ] `swift build -c release` passes without new warnings
+- [ ] `./scripts/test.sh` passes
 - [ ] Playback starts, loops smoothly and survives sleep/wake
 - [ ] It pauses when covered by a full-screen app and resumes after
 - [ ] CPU stays low: `top -l 6 -s 2 -pid $(pgrep -x LiveWall) -stats pid,cpu`
